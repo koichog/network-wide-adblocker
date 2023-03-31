@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            padding: 20px;
+            background-color: #009879;
+            color: white;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #009879;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Configuration</h1>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <button id="goToEntries">Go to Adblocker Entries</button>
+        <button id="flushEntries">Flush Entries</button>
+        <button id="restartSquid">Restart Squid</button>
+    </div>
+    <div class="container">
+        <div class="form-group">
+            <label for="mainBlocklistUrl">Main Blocklist URL:</label>
+            <input type="text" id="mainBlocklistUrl" placeholder="Enter the URL for the main blocked domains list.">
+            <button id="updateMainBlocklistUrl">Update Main Blocklist URL</button>
+        </div>
+        <div class="form-group">
+            <label for="customBlocklist">Custom Blocklist:</label>
+            <textarea id="customBlocklist" rows="10" placeholder="Create a custom list of blocked domains - each domain on a new line."></textarea>
+            <button id="saveCustomBlocklist">Save Custom Blocklist</button>
+        </div>
+        <div class="form-group">
+            <label for="logs">Logs:</label>
+            <table>
+                <tbody id="logs">
+                </tbody>
+            </table>
+            <button id="flushLogs">Flush Flask Logs</button>
+            <button id="getLogs">Get Flask Logs</button>
+        </div>
+    </div>
+    <script> src='config.js' </script>
+</body>
+</html>
