@@ -15,7 +15,7 @@ echo "CONFIG_NETFILTER_XT_TARGET_TPROXY=m" >> .config
 
 echo "Creating the package and installing, take a breath as this will take a while. You can come back later :)"
 sleep 5
-make -j$(nproc)
+make 
 sudo make modules_install
 sudo cp arch/arm/boot/zImage /boot/$KERNEL.img
 

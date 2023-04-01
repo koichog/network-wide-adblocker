@@ -13,7 +13,7 @@ cd squid-${SQUID_VERSION}
 echo "Configuring Squid"
 ./configure --enable-ssl --with-openssl --enable-ssl-crtd
 
-echo "Installing it - this will take time so take a deep breath and come back later :)"
+echo "Installing it - this will take time so take a deep breath and come back in ~10mins :)"
 sleep 5
 sudo make
 sudo make install

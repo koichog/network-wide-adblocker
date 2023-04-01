@@ -5,7 +5,7 @@ import json
 import os
 
 async def read_access_log(websocket, path):
-    log_file = '/var/log/squid/access.log'
+    log_file = '/usr/local/squid/var/logs/access.log'
     last_position = 0
 
     while True:
@@ -35,4 +35,3 @@ start_server = websockets.serve(read_access_log, '0.0.0.0', 8080)
 
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()
-

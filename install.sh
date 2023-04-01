@@ -7,55 +7,50 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 echo "Cloning the github repository"
-git clone https://github.com/yourusername/your-adblocker-repo.git
+git clone https://github.com/koichog/network-wide-adblocker
 
 echo "Navigating to the cloned repository directory"
-cd your-adblocker-repo
+cd network-wide-adblocker
 
-# Set execution permissions for the Python scripts
-sudo chmod +x websocket_server.py flask_server.py reinstall-squid.sh enable-tproxy.sh
+# Set execution permissions for the Python scripts and create folders for the flask logs + lists
+sudo chmod +x websocket_server.py flask_server.py install-squid-ssl.sh enable-tproxy.sh
+sudo mkdir /var/www/html/blocklists
+sudo touch /var/www/html/blocklists/custom_blocklist.txt
+sudo touch /var/www/html/blocklists/main_blocklist.txt
+sudo touch /var/www/html/blocklists/flask_server.log
+
 
 if ! (grep -q '^CONFIG_NETFILTER_XT_TARGET_TPROXY=' /boot/config-"$(uname -r)" || zgrep -q '^CONFIG_NETFILTER_XT_TARGET_TPROXY=' /proc/config.gz); then
     echo "TPROXY is not supported by your kernel. Please enable it and recompile the kernel. You can do that by running enable-tproxy.sh"
     exit 1
 fi
 
-
-
-echo "Configuring the firewall"
-iptables -A INPUT -p tcp --dport 3128 -j ACCEPT
-iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
-iptables -A INPUT -p tcp --dport 8081 -j ACCEPT
-iptables-save > /etc/iptables/rules.v4
-
-
 echo "Update package lists and install required packages"
 sudo apt-get update && sudo apt-get install -y \
     nginx \
     python3 \
     python3-pip \
-    squid \
     openssl \
-    apache2-utils
+    apache2-utils\
+    iptables-persistent
 
-squid_version=$(squid -v)
-required_flags=( "enable-ssl" "with-openssl" "enable-ssl-crtd" )
+echo "Configuring the firewall"
+sudo iptables -A INPUT -s 192.168.1.0/24 -p tcp --dport 3128 -j ACCEPT
+sudo iptables -A INPUT -s 192.168.1.0/24 -p tcp --dport 443 -j ACCEPT
+sudo iptables -A INPUT -s 192.168.1.0/24 -p tcp --dport 8080 -j ACCEPT
+sudo iptables -A INPUT -s 192.168.1.0/24 -p tcp --dport 8081 -j ACCEPT
+sudo mkdir -p /etc/iptables
+sudo iptables-save > /etc/iptables/rules.v4
 
-for flag in "${required_flags[@]}"; do
-    if ! echo "$squid_version" | grep -q "$flag"; then
-        echo "Squid was not installed with the required flag: $flag"
-        echo "Please run the script reinstall-squid.sh"
-        exit 1
-    fi
-done
+
+sudo bash install-squid-ssl.sh
 
 # Install Python libraries required for Flask and WebSocket server
 sudo pip3 install flask websockets
 
 # Copy necessary files and directories to their appropriate locations
 sudo cp -r html /var/www/
-sudo cp squid.conf /etc/squid/
+sudo cp squid.conf /usr/local/squid/squid.conf
 
 
 
@@ -67,16 +62,16 @@ sudo htpasswd -c /etc/nginx/.htpasswd $username
 # Generate SSL certificate and key
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -subj "/C=UK/ST=Hampshire/L=Portsmouth/O=MyOrgOU=Me/CN=squdblocker.com" \
-    -keyout /etc/squid/key.pem \
-    -out /etc/squid/cert.pem
+    -keyout /usr/local/squid/key.pem \
+    -out /usr/local/squid/cert.pem
 
 # Configure Nginx for HTTPS
 echo 'server {
     listen 443 ssl;
     server_name localhost;
 
-    ssl_certificate /etc/squid/cert.pem;
-    ssl_certificate_key /etc/squid/key.pem;
+    ssl_certificate /usr/local/squid//cert.pem;
+    ssl_certificate_key /usr/local/squid/key.pem;
 
     root /var/www/html;
     index index.html;
@@ -93,39 +88,39 @@ ln -s /etc/nginx/sites-available/default-ssl /etc/nginx/sites-enabled/
 
 
 # Create start_services.sh script
-sudo bash -c "cat > /app/start_services.sh << EOL
+sudo bash -c "cat > start_services.sh << EOL
 #!/bin/bash
-service nginx restart
-service squid start
+sudo squid
+systemctl start nginx
 python3 websocket_server.py &
 python3 flask_server.py &
 EOL"
-sudo chmod +x /app/start_services.sh
+sudo chmod +x start_services.sh
 
 # Create stop_services.sh script
-sudo bash -c "cat > /app/stop_services.sh << EOL
+sudo bash -c "cat > stop_services.sh << EOL
 #!/bin/bash
-service nginx stop
-service squid stop
+systemctl stop nging
+sudo squid stop
 pkill -f websocket_server.py
 pkill -f flask_server.py
 EOL"
-sudo chmod +x /app/stop_services.sh
+sudo chmod +x stop_services.sh
 
 # Create uninstall.sh script
-sudo bash -c "cat > /app/uninstall.sh << EOL
+sudo bash -c "cat > uninstall.sh << EOL
 #!/bin/bash
-sudo service nginx stop
-sudo service squid stop
+sudo systemctl stop nginx
+sudo squid stop
 sudo apt-get remove -y nginx python3 python3-pip squid openssl apache2-utils iptables-persistent
 sudo rm -r * /var/www/html /etc/nginx/.htpasswd /etc/squid/squid
 # Remove firewall rules for the services
-iptables -D INPUT -p tcp --dport 3128 -j ACCEPT
-iptables -D INPUT -p tcp --dport 80 -j ACCEPT
-iptables -D INPUT -p tcp --dport 8080 -j ACCEPT
-iptables -D INPUT -p tcp --dport 8081 -j ACCEPT
+sudo iptables -D INPUT -s 192.168.1.0/24 -p tcp --dport 3128 -j ACCEPT
+sudo iptables -D INPUT -s 192.168.1.0/24 -p tcp --dport 443 -j ACCEPT
+sudo iptables -D INPUT -s 192.168.1.0/24 -p tcp --dport 8080 -j ACCEPT
+sudo iptables -D INPUT -s 192.168.1.0/24 -p tcp --dport 8081 -j ACCEPT
 
 # Save the updated firewall configuration
 iptables-save > /etc/iptables/rules.v4"
 
-sudo /app/start_services.sh
+sudo bash start_services.sh

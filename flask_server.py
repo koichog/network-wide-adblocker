@@ -38,7 +38,7 @@ def restart_squid():
 
 @app.route('/flush_entries', methods=['POST'])
 def truncate_access_log():
-    access_log_path = '/var/log/squid/access.log'
+    access_log_path = '/usr/local/squid/var/logs/access.log'
     with open(access_log_path, 'w') as log_file:
         log_file.truncate(0)
     return 'Access.log truncated', 200
@@ -56,7 +56,7 @@ def flush_logs():
     with open('/var/www/html/blocklists/flask_server.log', 'w') as logs:
         logs.truncate(0)
     return 'Logs flushed', 200
-    
+
 @app.route('/update_main_blocklist', methods=['POST'])
 def update_main_blocklist_url():
     blocklist_url = request.data.decode('utf-8')
@@ -89,4 +89,3 @@ def save_custom_blocklist():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8081)
-
