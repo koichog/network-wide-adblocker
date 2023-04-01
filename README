@@ -2,23 +2,31 @@
 
 This project provides a network-wide adblocker that can be easily installed on your system.
 
+Squid-based adblocker that uses two blacklists for fitlering requests + WEB interface(Nginx). 
+
+The web dashboard consist of
+- page that shows real-time entries in access.log (status of requests - accepted/rejected) - done via websocket
+- Configurations tab - done via flask:
+        ---> modifying the URL used for the main blocklist
+        ---> editing/viewing in real time the custom blocklist
+        ---> restarting squid
+        ---> viewing/flushing the flask logs
+        
+ Squid is rebuild from source with the neccesary flags for ssl bumping, the cert and the key are self generated during the installation.
+ Same key and cert are used in Nginx for Authentication.
+ The script also installs iptables and allows traffic on port 80,8080,8081,3128 for the local network.
+ 
+ This is a BETA project that requires further security implementations. 
+ However, this is a great project for home networks as it works fine as long as the usage/hardware is OK.
+ 
+ I have other services configured on my raspberry pi and still I am using it for running the adblocker with few devices connected to it.
+ 
 ## Installation
-
-To install the network-wide adblocker, follow these steps:
-
-1. Open a terminal or command prompt.
-
-2. Run the following command to download the `install.sh` script:
 
 curl -L -o install.sh https://raw.githubusercontent.com/koichog/network-wide-adblocker/main/install.sh
 
-3. Grant execute permissions to the `install.sh` script:
-
 sudo +x install.sh
-
-4. Run the `install.sh` script to start the installation process:
 
 ./install.sh
 
-5. Follow the on-screen instructions to complete the installation.
 
