@@ -1,0 +1,22 @@
+# Network-Wide Adblocker
+
+This project provides a network-wide adblocker that can be easily installed on your system.
+
+## Installation
+
+To install the network-wide adblocker, follow these steps:
+
+1. Open a terminal or command prompt.
+
+2. Run the following command to download the `install.sh` script:
+
+curl -L -o install.sh https://raw.githubusercontent.com/koichog/network-wide-adblocker/main/install.sh
+
+3. Grant execute permissions to the `install.sh` script:
+
+4. Run the `install.sh` script to start the installation process:
+
+./install.sh
+
+5. Follow the on-screen instructions to complete the installation.
+
