@@ -30,3 +30,7 @@ sudo +x install.sh
 ./install.sh
 
 
+-----
+if install-squid=ssl.sh doesn't work/satisfy your os needs, try rebuild-squid2.sh
+
+
