@@ -1,3 +1,4 @@
+import ssl
 import sys
 import os
 import requests
@@ -38,7 +39,7 @@ def restart_squid():
 
 @app.route('/flush_entries', methods=['POST'])
 def truncate_access_log():
-    access_log_path = '/usr/local/squid/var/logs/access.log'
+    access_log_path = '/var/log/squid/access.log'
     with open(access_log_path, 'w') as log_file:
         log_file.truncate(0)
     return 'Access.log truncated', 200
@@ -88,4 +89,6 @@ def save_custom_blocklist():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8081)
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS)
+    context.load_cert_chain(certfile='/usr/local/squid/cert.pem', keyfile='/usr/local/squid/key.pem')
+    app.run(host='0.0.0.0', port=8081, ssl_context=context)

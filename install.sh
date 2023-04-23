@@ -15,7 +15,7 @@ cd network-wide-adblocker
 # Set execution permissions for the Python scripts and create folders for the flask logs + lists
 sudo chmod +x websocket_server.py flask_server.py install-squid-ssl.sh enable-tproxy.sh
 sudo mkdir /var/www/html/blocklists
-sudo touch /var/www/html/blocklists/custom_blocklist.txt
+sudo mv custom_blocklist /var/www/html/blocklists/custom_blocklist.txt
 sudo touch /var/www/html/blocklists/main_blocklist.txt
 sudo touch /var/www/html/blocklists/flask_server.log
 
@@ -66,31 +66,16 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -out /usr/local/squid/cert.pem
 
 # Configure Nginx for HTTPS
-echo 'server {
-    listen 443 ssl;
-    server_name localhost;
+sudo mv dashboard.conf /etc/nginx/sites-available/dashboard
 
-    ssl_certificate /usr/local/squid//cert.pem;
-    ssl_certificate_key /usr/local/squid/key.pem;
-
-    root /var/www/html;
-    index index.html;
-
-    location / {
-        auth_basic "Restricted Access";
-        auth_basic_user_file /etc/nginx/.htpasswd;
-        try_files $uri $uri/ =404;
-    }
-}' > /etc/nginx/sites-available/default-ssl
-
-# Create a symbolic link for the new Nginx HTTPS configuration
-ln -s /etc/nginx/sites-available/default-ssl /etc/nginx/sites-enabled/
+# Create a symbolic link for the new Nginx configuration
+ln -s /etc/nginx/sites-available/dashboard /etc/nginx/sites-enabled/
 
 
 # Create start_services.sh script
 sudo bash -c "cat > start_services.sh << EOL
 #!/bin/bash
-sudo squid
+sudo systemctl squid
 systemctl start nginx
 python3 websocket_server.py &
 python3 flask_server.py &
@@ -101,7 +86,7 @@ sudo chmod +x start_services.sh
 sudo bash -c "cat > stop_services.sh << EOL
 #!/bin/bash
 systemctl stop nging
-sudo squid stop
+sudo systemctl stop squid
 pkill -f websocket_server.py
 pkill -f flask_server.py
 EOL"
@@ -110,8 +95,7 @@ sudo chmod +x stop_services.sh
 # Create uninstall.sh script
 sudo bash -c "cat > uninstall.sh << EOL
 #!/bin/bash
-sudo systemctl stop nginx
-sudo squid stop
+sudo bash stop_services.sh
 sudo apt-get remove -y nginx python3 python3-pip squid openssl apache2-utils iptables-persistent
 sudo rm -r * /var/www/html /etc/nginx/.htpasswd /etc/squid/squid
 # Remove firewall rules for the services
@@ -123,4 +107,4 @@ sudo iptables -D INPUT -s 192.168.1.0/24 -p tcp --dport 8081 -j ACCEPT
 # Save the updated firewall configuration
 iptables-save > /etc/iptables/rules.v4"
 
-sudo bash start_services.sh
+echo "To run: sudo bash start_services.sh"
